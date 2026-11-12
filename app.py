@@ -1,6 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-import os
 
 st.set_page_config(page_title="VISION", page_icon="🤖", layout="centered")
 
@@ -17,7 +16,7 @@ model = genai.GenerativeModel(
 )
 
 st.title("VISION")
-st.caption("Your personal AI assistant")
+st.caption("Your personal AI assistant (Voice Enabled)")
 
 if "chat" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
@@ -27,7 +26,13 @@ for msg in st.session_state.chat.history:
     with st.chat_message(role):
         st.markdown(msg.parts[0].text)
 
-if prompt := st.chat_input("Kuch bhi poochhein..."):
+with st.expander("🎤 Voice Input (Bolkar poochhein)", expanded=False):
+    audio_value = st.audio_input("Record karein")
+    if audio_value:
+        st.audio(audio_value)
+        st.info("Aapne audio record kar liya hai. (Note: Google API direct audio nahi sun sakti, isliye abhi type karke poochhein. Voice-to-text feature next update me add hoga.)")
+
+if prompt := st.chat_input("Type karein ya mic dabayein..."):
     with st.chat_message("user"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
