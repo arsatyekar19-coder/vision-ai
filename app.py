@@ -1,5 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
+from streamlit_mic_recorder import mic_recorder
 
 st.set_page_config(page_title="VISION", page_icon="🤖", layout="centered")
 
@@ -16,23 +17,47 @@ model = genai.GenerativeModel(
 )
 
 st.title("VISION")
-st.caption("Your personal AI assistant (Voice Enabled)")
+st.caption("Your personal AI assistant")
 
 if "chat" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
 
+# Chat history dikhane ke liye
 for msg in st.session_state.chat.history:
     role = "user" if msg.role == "user" else "assistant"
     with st.chat_message(role):
         st.markdown(msg.parts[0].text)
 
-with st.expander("🎤 Voice Input (Bolkar poochhein)", expanded=False):
-    audio_value = st.audio_input("Record karein")
-    if audio_value:
-        st.audio(audio_value)
-        st.info("Aapne audio record kar liya hai. (Note: Google API direct audio nahi sun sakti, isliye abhi type karke poochhein. Voice-to-text feature next update me add hoga.)")
+# --- VOICE INPUT KA NAYA HISA ---
+st.write("---")
+st.write("🎤 **Bolkar poochhein (Mic dabayein):**")
+audio = mic_recorder(start_prompt="Start Recording", stop_prompt="Stop & Send", just_once=True, key='recorder')
 
-if prompt := st.chat_input("Type karein ya mic dabayein..."):
+if audio:
+    with st.spinner("Aawaz sun raha hoon..."):
+        try:
+            audio_bytes = audio['bytes']
+            response = model.generate_content([
+                "Transcribe this audio exactly in the language spoken. Do not answer, just transcribe.",
+                {"mime_type": "audio/wav", "data": audio_bytes}
+            ])
+            user_text = response.text.strip()
+            
+            st.success(f"Aapne kaha: {user_text}")
+            
+            with st.chat_message("user"):
+                st.markdown(user_text)
+            with st.chat_message("assistant"):
+                ai_response = st.session_state.chat.send_message(user_text)
+                st.markdown(ai_response.text)
+                
+        except Exception as e:
+            st.error(f"Error: {e}")
+st.write("---")
+# --- VOICE INPUT KHATAM ---
+
+# Type karke bhejne ka option
+if prompt := st.chat_input("Ya yahan type karein..."):
     with st.chat_message("user"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
