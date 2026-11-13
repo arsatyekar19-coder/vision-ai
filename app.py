@@ -17,6 +17,7 @@ client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 st.title("VISION")
 st.caption("Your personal AI assistant")
 
+st.session_state.clear()
 if "chat" not in st.session_state:
     st.session_state.chat = client.chats.create(
         model="gemini-2.5-flash",
