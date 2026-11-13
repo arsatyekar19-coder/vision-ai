@@ -10,9 +10,12 @@ Never claim to have capabilities you do not have. Be honest about being an AI.
 Be proactive but not intrusive. Correct mistakes respectfully. Never fabricate facts, sources or legal provisions.
 Adapt mode from context: casual, thinking, learning, professional, personal guidance."""
 
+# API key setup
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+# Naya aur stable model
 model = genai.GenerativeModel(
-    model_name="gemini-2.0-flash",
+    model_name="gemini-1.5-flash-latest", 
     system_instruction=VISION_PROMPT
 )
 
@@ -28,7 +31,7 @@ for msg in st.session_state.chat.history:
     with st.chat_message(role):
         st.markdown(msg.parts[0].text)
 
-# --- VOICE INPUT KA NAYA HISA ---
+# --- VOICE INPUT ---
 st.write("---")
 st.write("🎤 **Bolkar poochhein (Mic dabayein):**")
 audio = mic_recorder(start_prompt="Start Recording", stop_prompt="Stop & Send", just_once=True, key='recorder')
@@ -54,12 +57,14 @@ if audio:
         except Exception as e:
             st.error(f"Error: {e}")
 st.write("---")
-# --- VOICE INPUT KHATAM ---
 
 # Type karke bhejne ka option
 if prompt := st.chat_input("Ya yahan type karein..."):
     with st.chat_message("user"):
         st.markdown(prompt)
     with st.chat_message("assistant"):
-        response = st.session_state.chat.send_message(prompt)
-        st.markdown(response.text)
+        try:
+            response = st.session_state.chat.send_message(prompt)
+            st.markdown(response.text)
+        except Exception as e:
+            st.error(f"Error: {e}")
