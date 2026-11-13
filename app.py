@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from streamlit_mic_recorder import mic_recorder
 
 st.set_page_config(page_title="VISION", page_icon="🤖", layout="centered")
@@ -10,25 +11,21 @@ Never claim to have capabilities you do not have. Be honest about being an AI.
 Be proactive but not intrusive. Correct mistakes respectfully. Never fabricate facts, sources or legal provisions.
 Adapt mode from context: casual, thinking, learning, professional, personal guidance."""
 
-# API key setup
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
-# Naya aur stable model
-model = genai.GenerativeModel(
-    model_name="gemini-pro",
-    system_instruction=VISION_PROMPT
-)
+# Naya Google GenAI Client
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 st.title("VISION")
 st.caption("Your personal AI assistant")
 
 if "chat" not in st.session_state:
-    st.session_state.chat = model.start_chat(history=[])
+    st.session_state.chat = client.chats.create(
+        model="gemini-2.5-flash",
+        config=types.GenerateContentConfig(system_instruction=VISION_PROMPT)
+    )
 
-# Chat history dikhane ke liye
-for msg in st.session_state.chat.history:
-    role = "user" if msg.role == "user" else "assistant"
-    with st.chat_message(role):
+# Chat history (Naye library ke hisaab se)
+for msg in st.session_state.chat.get_history():
+    with st.chat_message(msg.role):
         st.markdown(msg.parts[0].text)
 
 # --- VOICE INPUT ---
@@ -40,10 +37,13 @@ if audio:
     with st.spinner("Aawaz sun raha hoon..."):
         try:
             audio_bytes = audio['bytes']
-            response = model.generate_content([
-                "Transcribe this audio exactly in the language spoken. Do not answer, just transcribe.",
-                {"mime_type": "audio/wav", "data": audio_bytes}
-            ])
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
+                    "Transcribe this audio exactly in the language spoken. Do not answer, just transcribe."
+                ]
+            )
             user_text = response.text.strip()
             
             st.success(f"Aapne kaha: {user_text}")
