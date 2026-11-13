@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 
 st.set_page_config(page_title="VISION", page_icon="🤖", layout="centered")
 
@@ -9,31 +9,36 @@ Never claim to have capabilities you do not have. Be honest about being an AI.
 Be proactive but not intrusive. Correct mistakes respectfully. Never fabricate facts, sources or legal provisions.
 Adapt mode from context: casual, thinking, learning, professional, personal guidance."""
 
-genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
-# Google ka naya model
-model = genai.GenerativeModel(
-    model_name="gemini-3.8-flash",
-    system_instruction=VISION_PROMPT
-)
+# Groq Client Setup
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
 st.title("VISION")
 st.caption("Your personal AI assistant")
 
-if "chat" not in st.session_state:
-    st.session_state.chat = model.start_chat(history=[])
+if "messages" not in st.session_state:
+    st.session_state.messages = [{"role": "system", "content": VISION_PROMPT}]
 
-for msg in st.session_state.chat.history:
-    role = "user" if msg.role == "user" else "assistant"
-    with st.chat_message(role):
-        st.markdown(msg.parts[0].text)
+# Purani chat dikhane ke liye
+for message in st.session_state.messages:
+    if message["role"] != "system":
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
+# Naya message aane par
 if prompt := st.chat_input("Kuch bhi poochhein..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
+
     with st.chat_message("assistant"):
         try:
-            response = st.session_state.chat.send_message(prompt)
-            st.markdown(response.text)
+            # Groq ka fast model
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=st.session_state.messages
+            )
+            reply = response.choices[0].message.content
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
         except Exception as e:
             st.error(f"Error: {e}")
