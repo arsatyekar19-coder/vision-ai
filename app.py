@@ -20,7 +20,7 @@ st.caption("Your personal AI assistant")
 st.session_state.clear()
 if "chat" not in st.session_state:
     st.session_state.chat = client.chats.create(
-        model="gemini-2.5-flash",
+        model="gemini-3.8-flash",
         config=types.GenerateContentConfig(system_instruction=VISION_PROMPT)
     )
 
@@ -39,7 +39,7 @@ if audio:
         try:
             audio_bytes = audio['bytes']
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.8-flash",
                 contents=[
                     types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
                     "Transcribe this audio exactly in the language spoken. Do not answer, just transcribe."
