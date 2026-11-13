@@ -15,7 +15,7 @@ genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 # Naya aur stable model
 model = genai.GenerativeModel(
-    model_name="models/gemini-1.5-flash", 
+    model_name="gemini-pro",
     system_instruction=VISION_PROMPT
 )
 
